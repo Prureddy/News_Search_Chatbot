@@ -4,3 +4,4 @@ langchain_qdrant
 qdrant_client
 langchain
 langchain_community
+gunicorn
