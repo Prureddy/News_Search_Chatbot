@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Search</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+        #search-form, #summarize-form, #category-form, #filters {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        input[type="text"], select, input[type="date"], button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"] {
+            flex: 1;
+            min-width: 250px;
+        }
+        button {
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .result-item {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        .result-item h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .result-item p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .result-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .result-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>News Search</h1>
+    <form id="search-form">
+        <input type="text" id="search-query" placeholder="Enter your query" required>
+        <button id="search-button" type="submit">Search</button>
+    </form>
+    
+    <form id="summarize-form">
+        <input type="text" id="summarize-query" placeholder="Enter your query for summarization" required>
+        <button id="summarize-button" type="submit">Summarize</button>
+    </form>
+
+    <form id="category-form">
+        <h2>Categories:</h2>
+        <select id="category-select" required>
+            <option value="">Select a category</option>
+            <option value="general">General</option>
+            <option value="sports">Sports</option>
+            <option value="business">Business</option>
+            <option value="technology">Technology</option>
+            <option value="lifestyle">Lifestyle</option>
+            <option value="economy">Economy</option>
+            <option value="health">Health</option>
+            <option value="entertainment">Entertainment</option>
+        </select>
+    </form>
+    
+    <div id="filters">
+        <h2>Date Filter:</h2>
+        <input type="date" id="news-date">
+        <button id="date-filter">Apply Date Filter</button>
+    </div>
+
+    <div class="results" id="results"></div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const query = document.getElementById('search-query').value.trim();
+            const selectedDate = document.getElementById('news-date').value;
+            const selectedCategory = document.getElementById('category-select').value;
+
+            if (!query) {
+                alert("Please enter a query.");
+                return;
+            }
+
+            const response = await fetch('/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query, category: selectedCategory || null, date: selectedDate })
+            });
+
+            if (!response.ok) {
+                alert("Failed to fetch data.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Received response:", data);
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="answer">Error: ${data.error}</p>`;
+            } else {
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = `<p>No relevant articles found.</p>`;
+                } else {
+                    data.forEach(item => {
+                        const resultItem = document.createElement('div');
+                        resultItem.classList.add('result-item');
+                        resultItem.innerHTML = `
+                            <h3>${item.metadata.title || "No Title"}</h3>
+                            <p>${item.page_content}</p>
+                        `;
+                        resultsDiv.appendChild(resultItem);
+                    });
+                }
+            }
+        });
+
+        document.getElementById('summarize-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const query = document.getElementById('summarize-query').value.trim();
+        
+            if (!query) {
+                alert("Please enter a query.");
+                return;
+            }
+        
+            const response = await fetch('/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query })
+            });
+        
+            if (!response.ok) {
+                alert("Failed to fetch summary.");
+                return;
+            }
+        
+            const data = await response.json();
+            console.log("Received response:", data);
+        
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+        
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="answer">Error: ${data.error}</p>`;
+            } else {
+                resultsDiv.innerHTML = `<h3>Summary:</h3><p>${data.summary}</p>`;
+            }
+        });
+        
+
+        document.getElementById('category-form').addEventListener('change', async function(event) {
+            const selectedCategory = event.target.value;
+
+            if (!selectedCategory) {
+                alert("Please select a category.");
+                return;
+            }
+
+            const response = await fetch('/category-search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ category: selectedCategory })
+            });
+
+            if (!response.ok) {
+                alert("Failed to fetch data.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Received response:", data);
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="answer">Error: ${data.error}</p>`;
+            } else {
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = `<p>No relevant articles found.</p>`;
+                } else {
+                    data.forEach(item => {
+                        const resultItem = document.createElement('div');
+                        resultItem.classList.add('result-item');
+                        resultItem.innerHTML = `
+                            <h3>${item.metadata.title || "No Title"}</h3>
+                            <p>${item.page_content}</p>
+                        `;
+                        resultsDiv.appendChild(resultItem);
+                    });
+                }
+            }
+        });
+
+        document.getElementById('date-filter').addEventListener('click', async function(event) {
+            event.preventDefault();
+            const selectedDate = document.getElementById('news-date').value;
+
+            if (!selectedDate) {
+                alert("Please select a date.");
+                return;
+            }
+
+            const response = await fetch('/datewise-search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ date: selectedDate })
+            });
+
+            if (!response.ok) {
+                alert("Failed to fetch data.");
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Received response:", data);
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (data.error) {
+                resultsDiv.innerHTML = `<p class="answer">Error: ${data.error}</p>`;
+            } else {
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = `<p>No relevant articles found.</p>`;
+                } else {
+                    data.forEach(item => {
+                        const resultItem = document.createElement('div');
+                        resultItem.classList.add('result-item');
+                        resultItem.innerHTML = `
+                            <h3>${item.metadata.title || "No Title"}</h3>
+                            <p>${item.page_content}</p>
+                        `;
+                        resultsDiv.appendChild(resultItem);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
