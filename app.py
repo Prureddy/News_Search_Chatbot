@@ -17,12 +17,12 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 # Initialize OpenAI Embeddings with your API key
-openai_api_key = "sk-proj-kogDv8AdIn3QAUaCLfKNT3BlbkFJyTnzROdCZ80hRkCV8t2U"
+openai_api_key = "openai-key"
 embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
 
 # Qdrant client setup
-url = "https://e9c601c3-b7ae-40bc-ba31-fa7a6448f627.us-east4-0.gcp.cloud.qdrant.io:6333"
-api_key = "NExfPwZ55hA9RGpkwJCn977eEl8UlS68D-qLuSYtpq_TGGfC2pVhYA"
+url = "qdrant-url"
+api_key = "qdrant-api"
 
 
 client = QdrantClient(url=url, api_key=api_key)
